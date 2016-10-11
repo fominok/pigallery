@@ -31,6 +31,3 @@
           (assoc :session (assoc session :identity (:id user))))
       (catch Exception e
         (handle-registration-error e)))))
-
-(mount.core/start)
-(register! {} {:id "foo" :pass "12341234" :pass-confirm "12341234"})
