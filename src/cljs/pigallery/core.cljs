@@ -6,6 +6,8 @@
             [goog.history.EventType :as HistoryEventType]
             [markdown.core :refer [md->html]]
             [pigallery.ajax :refer [load-interceptors!]]
+            [pigallery.components.common :as c]
+            [pigallery.components.registration :as reg]
             [ajax.core :refer [GET POST]])
   (:import goog.History))
 
@@ -15,6 +17,15 @@
    [:a.nav-link
     {:href uri
      :on-click #(reset! collapsed? true)} title]])
+
+(defn user-menu []
+  (if-let [id (session/get :identity)]
+    [:ul.nav.navbar-nav.pull-xs-right
+     [:li.nav-item
+      [:a.dropdown-item.btn {:on-click #(session/remove! :identity)}
+       [:i.fa.fa-user] " " id " | sign out"]]]
+    [:ul.nav.navbar-nav.pull-xs-right
+     [:ul.nav-item [reg/registration-button]]]))
 
 (defn navbar []
   (let [collapsed? (r/atom true)]
@@ -27,7 +38,8 @@
         [:a.navbar-brand {:href "#/"} "pigallery"]
         [:ul.nav.navbar-nav
          [nav-link "#/" "Home" :home collapsed?]
-         [nav-link "#/about" "About" :about collapsed?]]]])))
+         [nav-link "#/about" "About" :about collapsed?]]]
+       [user-menu]])))
 
 (defn about-page []
   [:div.container
@@ -54,8 +66,14 @@
   {:home #'home-page
    :about #'about-page})
 
+(defn modal []
+  (when-let [session-modal (session/get :modal)]
+    [session-modal]))
+
 (defn page []
-  [(pages (session/get :page))])
+  [:div
+   [modal]
+   [(pages (session/get :page))]])
 
 ;; -------------------------
 ;; Routes
@@ -72,11 +90,11 @@
 ;; must be called after routes have been defined
 (defn hook-browser-navigation! []
   (doto (History.)
-        (events/listen
-          HistoryEventType/NAVIGATE
-          (fn [event]
-              (secretary/dispatch! (.-token event))))
-        (.setEnabled true)))
+    (events/listen
+     HistoryEventType/NAVIGATE
+     (fn [event]
+       (secretary/dispatch! (.-token event))))
+    (.setEnabled true)))
 
 ;; -------------------------
 ;; Initialize app
@@ -89,6 +107,5 @@
 
 (defn init! []
   (load-interceptors!)
-  (fetch-docs!)
   (hook-browser-navigation!)
   (mount-components))
