@@ -8,6 +8,7 @@
             [pigallery.ajax :refer [load-interceptors!]]
             [pigallery.components.common :as c]
             [pigallery.components.registration :as reg]
+            [pigallery.components.login :as l]
             [ajax.core :refer [GET POST]])
   (:import goog.History))
 
@@ -22,10 +23,13 @@
   (if-let [id (session/get :identity)]
     [:ul.nav.navbar-nav.pull-xs-right
      [:li.nav-item
-      [:a.dropdown-item.btn {:on-click #(session/remove! :identity)}
+      [:a.dropdown-item.btn {:on-click #(POST
+                                            "/logout"
+                                            {:handler (fn [] (session/remove! :identity))})}
        [:i.fa.fa-user] " " id " | sign out"]]]
     [:ul.nav.navbar-nav.pull-xs-right
-     [:ul.nav-item [reg/registration-button]]]))
+     [:li.nav-item [l/login-button]]
+     [:li.nav-item [reg/registration-button]]]))
 
 (defn navbar []
   (let [collapsed? (r/atom true)]
@@ -108,4 +112,5 @@
 (defn init! []
   (load-interceptors!)
   (hook-browser-navigation!)
+  (session/put! :identity js/identity)
   (mount-components))
